@@ -14,6 +14,7 @@ public final class R {
         public static final int arrow=0x7f020000;
         public static final int home=0x7f020001;
         public static final int icon=0x7f020002;
+        public static final int push_pin=0x7f020003;
     }
     public static final class id {
         public static final int MapView01=0x7f050001;

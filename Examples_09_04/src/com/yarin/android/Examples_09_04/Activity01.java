@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -31,18 +32,22 @@ import com.google.android.maps.Overlay;
 public class Activity01 extends MapActivity 
 {
 	public MapController mapController;
-    public MyLocationOverlay myPosition;
+    public MyLocationOverlay myPosition=new MyLocationOverlay();
+    public PastLocationOverlay Current_Position;
     public MapView myMapView;
+    //private SharedPreferences GPS_COORDS;
+    //private int num_GPS=0;
+    private int num_sites=0;
    // Location[] site=new Location[5];
    // site[0]=new Location(-81,30);
-   double[] site_lat =new double[2];
-    double[] site_long =new double[2];
+   double[] site_lat =new double[100];
+    double[] site_long =new double[100];
     //site_lat[0]=10.0000;
     Location location;
     private static final int ZOOM_IN=Menu.FIRST; 
-    //private static final int ZOOM_OUT=Menu.FIRST+1;
+    private static final int ZOOM_OUT=Menu.FIRST+1;
     //**********
-    private static final int CHECK=Menu.FIRST+1;
+    private static final int CHECK=Menu.FIRST+2;
     //private static final int =Menu.FIRST+3;
     //************
 
@@ -55,13 +60,23 @@ public class Activity01 extends MapActivity
         Log.e("gps","ERROR");
         setContentView(R.layout.main);
         
-        
-        site_lat[0]=28.054583;
-        site_lat[1]=28.054983;
-      //  site_lat[2]=27.000000;
-        site_long[0]=-82.411429;
-        site_long[1]=-82.411829;
-       // site_long[2]=-83.000000;
+        /***********
+         SharedPreferences sites=getSharedPreferences("site",0);
+         num_sites=sites.getInt("num_sites", 0);
+         for(int k=0;k<num_sites;k++)
+         {
+        	 site_lat[k]=Double.parseDouble(sites.getString("sitelat" +Integer.toString(k), ""));
+        	 site_lat[k]=Double.parseDouble(sites.getString("sitelong" +Integer.toString(k), ""));
+         }
+         //////////////
+          */
+         num_sites=2;
+        site_lat[0]=30.731881;
+        site_lat[1]=30.643898;
+        //site_lat[2]=27.000000;
+        site_long[0]=104.02937;
+        site_long[1]=103.993665;
+        //site_long[2]=-83.000000;
       	 //取得LocationManager实例
         LocationManager locationManager;
         String context=Context.LOCATION_SERVICE;
@@ -76,7 +91,7 @@ public class Activity01 extends MapActivity
         myMapView.displayZoomControls(false);   
         //设置使用MyLocationOverlay来绘图
         mapController.setZoom(17);
-        myPosition=new MyLocationOverlay();
+        
         List<Overlay> overlays=myMapView.getOverlays();
         overlays.add(myPosition);
 
@@ -109,6 +124,13 @@ public class Activity01 extends MapActivity
         
         if(location!=null)
         {
+            Current_Position=new PastLocationOverlay(location);
+            List<Overlay> overlays=myMapView.getOverlays();
+            overlays.add(Current_Position);
+            
+
+            
+            
         	//为绘制标志的类设置坐标
             myPosition.setLocation(location);
             //取得经度和纬度
@@ -155,12 +177,26 @@ public class Activity01 extends MapActivity
 	
 	public boolean Check(Location location)
 	{
-		double Site_X=28.054553;
-		double Site_Y=-82.411629;
-		double lat_C=location.getLatitude();
-        double long_C=location.getLongitude();
-		if((Math.pow((lat_C-Site_X),2)+Math.pow((long_C-Site_Y),2))<=100) return true;
-		else return false;
+		
+		for(int k=0;k<num_sites;k++)
+		{
+			if((Math.pow((location.getLatitude()-site_lat[k]),2)+
+					Math.pow((location.getLongitude()-site_long[k]),2))<=2) 
+			{
+				site_lat[k]=-0.1;
+				site_long[k]=-0.1;
+				return true;
+			}
+	
+		}
+		return false;
+		
+		//double Site_X=28.054553;
+		//double Site_Y=-82.411629;
+		//double lat_C=location.getLatitude();
+        //double long_C=location.getLongitude();
+		//if((Math.pow((lat_C-Site_X),2)+Math.pow((long_C-Site_Y),2))<=100) return true;
+		//else return false;
 	
 	}
 	
@@ -190,7 +226,7 @@ public class Activity01 extends MapActivity
 	{
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, ZOOM_IN, Menu.NONE, "放大");
-		//menu.add(0, ZOOM_OUT, Menu.NONE, "缩小");
+		menu.add(0, ZOOM_OUT, Menu.NONE, "缩小");
 		menu.add(0,CHECK,Menu.NONE,"确认");
 		return true;
 	}
@@ -202,16 +238,22 @@ public class Activity01 extends MapActivity
 		{
 			case (ZOOM_IN):
 				//放大
+				mapController.zoomIn();
+				return true;
+			case (ZOOM_OUT):
+				//缩小
 				mapController.zoomOut();
 				return true;
-			//case (ZOOM_OUT):
-				//缩小
-			//	mapController.zoomOut();
-				//return true;
 			case (CHECK):
 				//打卡
 				//Location location=getLocation();
-				if (Check(location)) DisplayToast("Check successful!Go to next site~");
+				if (Check(location)) 
+					{
+					DisplayToast("Check successful!Go to next site~");
+					
+					
+					
+					}
 				else DisplayToast("Check fail! Get closer.");
 				return true;
 		}
@@ -223,13 +265,12 @@ public class Activity01 extends MapActivity
 		Toast.makeText(this,str,Toast.LENGTH_SHORT).show();
 	}
     
-	class MyLocationOverlay extends Overlay
+	
+	class PastLocationOverlay extends Overlay
 	{
 		Location mLocation;
-		//在更新坐标时，设置该坐标，一边画图
-		public void setLocation(Location location)
-		{
-			mLocation = location;
+		public PastLocationOverlay(Location mLocation){
+			this.mLocation=mLocation;
 		}
 		@Override
 		public boolean draw(Canvas canvas, MapView mapView, boolean shadow, long when)
@@ -243,19 +284,61 @@ public class Activity01 extends MapActivity
 			paint.setStrokeWidth(1);
 			paint.setARGB(255, 255, 0, 0);
 			paint.setStyle(Paint.Style.STROKE);
-			Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.home);
-			Bitmap site_bmp=BitmapFactory.decodeResource(getResources(), R.drawable.arrow);
-			canvas.drawBitmap(bmp, myScreenCoords.x, myScreenCoords.y, paint);
+		//	Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.home);
+		//	Bitmap site_bmp=BitmapFactory.decodeResource(getResources(), R.drawable.arrow);
+		
 			
-			GeoPoint Site_GeoPoint;
+	
+
+			canvas.drawText(".", myScreenCoords.x, myScreenCoords.y, paint);
+			return true;
+		}
+		}
+	
+	class MyLocationOverlay extends Overlay
+	{
+		Location mLocation;
+		//在更新坐标时，设置该坐标，一边画图
+		public void setLocation(Location location)
+		{
+			mLocation = location;
+		}
+
+		@Override
+		public boolean draw(Canvas canvas, MapView mapView, boolean shadow, long when)
+		{
+			super.draw(canvas, mapView, shadow);
+			
+			Paint paint = new Paint();
+			Point myScreenCoords = new Point();
+			// 将经纬度转换成实际屏幕坐标
+			GeoPoint tmpGeoPoint = new GeoPoint((int)(mLocation.getLatitude()*1E6),(int)(mLocation.getLongitude()*1E6));
+			mapView.getProjection().toPixels(tmpGeoPoint, myScreenCoords);
+			paint.setStrokeWidth(1);
+			paint.setARGB(255, 255, 0, 0);
+			paint.setStyle(Paint.Style.STROKE);
+			//Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.home);
+			Bitmap site_bmp=BitmapFactory.decodeResource(getResources(), R.drawable.push_pin);
+			//canvas.drawBitmap(bmp, myScreenCoords.x, myScreenCoords.y, paint);
+			
+			GeoPoint Site_GeoPoint = null;
 			Point Site_ScreenCoords=new Point();
-			for(int i=0;i<=1;i++)
-			{	
+			//for(int i=0;i<=1;i++)
+			for(int i=0;i<num_sites;i++)
+			{
+				if(site_lat[i]!=-0.1&&site_long[i]!=-0.1)
+				{
 				Site_GeoPoint = new GeoPoint((int)(site_lat[i]*1E6),(int)(site_long[i]*1E6));
+				//SharedPreferences sites=getSharedPreferences("site",0);
+				//Site_GeoPoint = new GeoPoint((int)(sites.getString("sitelat" +
+				//		Integer.toString(i), "")),(int)(sites.getString("sitelat" +
+				//				Integer.toString(i), "")));
 				mapView.getProjection().toPixels(Site_GeoPoint, Site_ScreenCoords);
-				canvas.drawBitmap(site_bmp,Site_ScreenCoords.x, Site_ScreenCoords.y , paint);
+				canvas.drawBitmap(site_bmp,Site_ScreenCoords.x-site_bmp.getWidth(), Site_ScreenCoords.y-site_bmp.getHeight() , paint);
+				canvas.drawText("("+Double.toString(site_lat[i])+","+Double.toString(site_long[i])+")", Site_ScreenCoords.x,Site_ScreenCoords.y, paint);
+				}
 			}
-			canvas.drawText("Here am I", myScreenCoords.x, myScreenCoords.y, paint);
+			canvas.drawText(".", myScreenCoords.x, myScreenCoords.y, paint);
 			return true;
 		}
 	}
