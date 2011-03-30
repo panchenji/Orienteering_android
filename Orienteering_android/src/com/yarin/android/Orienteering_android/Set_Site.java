@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,8 +16,10 @@ import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -36,6 +40,8 @@ import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
+
+
 import android.widget.EditText;
 //import com.yarin.android.Examples_09_04.R;
 
@@ -49,11 +55,13 @@ public class Set_Site extends MapActivity
 	private SharedPreferences sites;
 	private boolean pin=false;
     private static final int Pin_Start=Menu.FIRST; 
-    
     private static final int Pin_End=Menu.FIRST+1;
-   
-	
-	
+    private static final int My_Location=Menu.FIRST+2;
+    
+    Location location;
+    LocationManager locationManager;
+    Criteria criteria =new Criteria();
+    String provider=null;
     
 	//Geocoder gc=new Geocoder(this,Locale.CHINA);
 	/** Called when the activity is first created. */
@@ -62,9 +70,12 @@ public class Set_Site extends MapActivity
 	{
 		super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.main);
+		setContentView(R.layout.main2);
 		
-    	
+        
+        String context=Context.LOCATION_SERVICE;
+        locationManager=(LocationManager)getSystemService(context);
+        
 		mMapView = (MapView) findViewById(R.id.MapView01);
 		//设置为交通模式
 		//mMapView.setTraffic(true);
@@ -85,20 +96,60 @@ public class Set_Site extends MapActivity
 		//设置倍数(1-21)
 		mMapController.setZoom(12); 
 		sites=getSharedPreferences("sites",0);
+		
+		
+		//设置Criteria（服务商）的信息
+        
+        //经度要求
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setCostAllowed(false);
+        criteria.setPowerRequirement(Criteria.POWER_LOW);
+        //取得效果最好的criteria
+        while(provider==null){
+        provider=locationManager.getBestProvider(criteria, true);
+        }
+        //得到坐标相关的信息
+        location=locationManager.getLastKnownLocation(provider);
+        //更新坐标
+       // updateWithNewLocation(location);
+        //注册一个周期性的更新，3000ms更新一次
+		//locationListener用来监听定位信息的改变
+        //locationManager.requestLocationUpdates(provider, 3000, 0,locationListener);
 		//添加Overlay，用于显示标注信息
         MyLocationOverlay myLocationOverlay = new MyLocationOverlay();
         List<Overlay> list = mMapView.getOverlays();
         list.add(myLocationOverlay);
+        
 	}
+	
+	//用于实现GPS位置的更新
+    private void UpdateMyLocation() 
+    {
+    	 location=locationManager.getLastKnownLocation(provider);
+    	 mGeoPoint = new GeoPoint((int) (location.getLatitude() * 1000000), (int) (location.getLongitude() * 1000000));
+    	 mMapController.animateTo(mGeoPoint); //转向新的位置
+    }
 	protected boolean isRouteDisplayed()
 	{
 		return false;
 	}
 	
+	//按键功能，返回键:返回主菜单   搜索键：开启搜索窗口
 	public boolean onKeyDown(int KeyCode,KeyEvent event)
 	{
 		switch(KeyCode)
 		{
+		
+		case KeyEvent.KEYCODE_BACK:
+			Intent intent =new Intent();
+			intent.setClass(Set_Site.this, Main.class);
+			
+			startActivity(intent);
+			Set_Site.this.finish();
+			break;
+		
 		case KeyEvent.KEYCODE_SEARCH:
 			final LayoutInflater factory = LayoutInflater.from(Set_Site.this);
 			//得到自定义对话框
@@ -112,16 +163,9 @@ public class Set_Site extends MapActivity
             {
                 public void onClick(DialogInterface dialog, int whichButton) 
                 {
-                	//输入完成后，点击“确定”开始登陆
-                	//m_Dialog = ProgressDialog.show
-                     //          (
-                      //      	 Activity01.this,
-                       //          "请等待...",
-                        //         "正在为你登录...", 
-                         //        true
-                    
-                	//     );
-                	//System.out.println('k');
+                	//输入完成后，点击“确定”开始搜索
+                
+                                          	//System.out.println('k');
                 	String search_content="1600 Pennsylvania Ave, Washington DC";
                     //search_content=((EditText)DialogView.findViewById(R.id.username)).getText().toString();
                 	change_center(search_content);
@@ -145,6 +189,8 @@ public class Set_Site extends MapActivity
            return super.onKeyDown(KeyCode, event);
 		
 		}
+	
+	//实现搜索后,地图中心点移到搜索地点
 	public void change_center(String search_content)
 	{
 		Geocoder gc= new Geocoder(this, Locale.getDefault());
@@ -154,6 +200,7 @@ public class Set_Site extends MapActivity
        // double lng=0.0;
         try{
         	List<Address> addresses = gc.getFromLocationName(search_content, 5);
+        	//根据地理位置取得经纬度坐标
         	//String add = "";
         	
         	if (addresses.size() > 0) {
@@ -171,12 +218,16 @@ public class Set_Site extends MapActivity
         }catch(Exception e){DisplayToast("error:"+e);};
 		
 	}
+	
+	//菜单栏
     public boolean onCreateOptionsMenu(Menu menu)
 	{
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, Pin_Start, Menu.NONE, "标记");
-		//menu.add(0, ZOOM_OUT, Menu.NONE, "缩小");
 		menu.add(0,Pin_End,Menu.NONE,"关闭标记");
+		menu.add(0, My_Location, Menu.NONE, "我的位置");
+		
+		
 		return true;
 	}
     
@@ -191,10 +242,13 @@ public class Set_Site extends MapActivity
 				return true;
 
 			case (Pin_End):
-				//正常模式
+				//取消标记
 			    pin=false;
 			
 				return true;
+			case (My_Location):
+				//我的位置
+				UpdateMyLocation();
 		}
 		return true;
 	}
@@ -202,6 +256,8 @@ public class Set_Site extends MapActivity
 	{
 		Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
 	}
+	
+	//用于Pin的Overlay,每记录一个Pin则创建一个PinOverlay用来显示Pin
 	class PinOverlay extends Overlay
 	{
 		GeoPoint GeoPinCoords;
@@ -230,28 +286,37 @@ public class Set_Site extends MapActivity
 		}*/
 		//public remove
 		
+		
+		//重写PinOverlay的draw函数
 		@Override
 		public void draw(Canvas canvas, MapView mapView,boolean shadow)
 		{
 			super.draw(canvas, mapView, shadow);
+			//一些Paint的设置
 			Paint paint = new Paint();
 			paint.setStrokeWidth(1);
 			paint.setARGB(255, 255, 0, 0);
 			paint.setStyle(Paint.Style.STROKE);
 			paint.setColorFilter(new LightingColorFilter(Color.WHITE, 0x80000000));
-			Bitmap bmparrow = BitmapFactory.decodeResource(getResources(), R.drawable.arrow);
+			Bitmap bmparrow = BitmapFactory.decodeResource(getResources(), R.drawable.push_pin);
 			//paint.setAlpha(00);
 			Point PinCoords=new Point(0,0);
 			mMapView.getProjection().toPixels(GeoPinCoords,PinCoords);
 			
-			canvas.drawBitmap(bmparrow, PinCoords.x-bmparrow.getWidth()/2, PinCoords.y-bmparrow.getHeight(), paint);
+			//显示Pin
+			canvas.drawBitmap(bmparrow, PinCoords.x-bmparrow.getWidth(), PinCoords.y-bmparrow.getHeight(), paint);
 			//canvas.drawText("天府广场", myScreenCoords.x, myScreenCoords.y, paint);
 		//	return true;
 		}
 	}
 		
+	
+	//用于显示我的位置的Overlay,我的位置有一个红点表示
 	class MyLocationOverlay extends Overlay
 	{
+		//重写MyLocationOverlay的onTouchOverlay函数，当pin==true时为
+		//标记状态，可以点击地图上的位置来记录Site,当pin==false时，为普通
+		//浏览状态
 		@Override
 		public boolean onTouchEvent(MotionEvent event,MapView mv)
 		{
@@ -317,6 +382,8 @@ public class Set_Site extends MapActivity
 			PinOverlay pin=new PinOverlay(Touch_GeoPoint);
 			overlays.add(pin);
 			PinOverlays.add(pin);
+			
+			
 			}
 			else
 			{
@@ -349,7 +416,7 @@ public class Set_Site extends MapActivity
 			return true;
 		}
 		
-		
+		//重写draw函数用于显示我的位置
 		@Override
 		public boolean draw(Canvas canvas, MapView mapView, boolean shadow, long when)
 		{

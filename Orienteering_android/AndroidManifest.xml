@@ -4,6 +4,7 @@
       android:versionCode="1"
       android:versionName="1.0">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
+    <uses-library android:name="com.google.android.maps" />
         <activity android:name=".Main"
                   android:label="@string/app_name">
 
@@ -13,8 +14,13 @@
             </intent-filter>
         </activity>
        
-       <activity android:name="Set_Site" ></activity>
-        <activity android:name="Check" ></activity>
+       <activity android:name=".Set_Site"
+       			 android:label="@string/Set_Sites" >
+       	</activity>
+       	
+        <activity android:name=".Check"
+        		  android:label="@string/Check" >
+         </activity>
      
     <uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>

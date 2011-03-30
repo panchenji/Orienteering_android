@@ -7,6 +7,7 @@ package com.yarin.android.Orienteering_android;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,6 +20,11 @@ public class Main extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.v("gps","VERBOSE");
+        Log.d("gps","DEBUG");
+        Log.i("gps","INFO");
+        Log.w("gps","WARN");
+        Log.e("gps","ERROR");
         setContentView(R.layout.main);
       //取得GridView对象
 		GridView gridview = (GridView) findViewById(R.id.gridview);
@@ -35,12 +41,16 @@ public class Main extends Activity {
 				switch(position) 
 				{
 				case 0:
+					//当选择第一个图标时进入Site设置
 					Intent intent =new Intent();
 					intent.setClass(Main.this, Set_Site.class);
+					
 					startActivity(intent);
 					Main.this.finish();
 					break;
+					
 				case 1:
+					//当选择第一个图标时进入定向越野打卡
 					Intent intent2 =new Intent();
 					intent2.setClass(Main.this, Check.class);
 					startActivity(intent2);

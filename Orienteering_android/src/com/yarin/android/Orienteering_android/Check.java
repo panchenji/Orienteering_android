@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -18,6 +19,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -53,21 +55,24 @@ public class Check extends MapActivity
 
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.v("gps","VERBOSE");
+        Log.v("gps","VERBOSE"); //错误检查
         Log.d("gps","DEBUG");
         Log.i("gps","INFO");
         Log.w("gps","WARN");
         Log.e("gps","ERROR");
-        setContentView(R.layout.main);
+        setContentView(R.layout.main3);
         
         /***********
          SharedPreferences sites=getSharedPreferences("site",0);
+         //读取文件中的设置的sites
          num_sites=sites.getInt("num_sites", 0);
+        //读取文件中site的个数
          for(int k=0;k<num_sites;k++)
          {
         	 site_lat[k]=Double.parseDouble(sites.getString("sitelat" +Integer.toString(k), ""));
         	 site_lat[k]=Double.parseDouble(sites.getString("sitelong" +Integer.toString(k), ""));
          }
+         //将sites存入数组中
          //////////////
           */
          num_sites=2;
@@ -103,8 +108,11 @@ public class Check extends MapActivity
         criteria.setBearingRequired(false);
         criteria.setCostAllowed(false);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
+        String provider=null;
         //取得效果最好的criteria
-        String provider=locationManager.getBestProvider(criteria, true);
+       // while(provider==null){
+        provider=locationManager.getBestProvider(criteria, true);
+        //}
         //得到坐标相关的信息
         location=locationManager.getLastKnownLocation(provider);
         //更新坐标
@@ -114,7 +122,24 @@ public class Check extends MapActivity
         locationManager.requestLocationUpdates(provider, 3000, 0,locationListener);
  
     }
-
+	
+	//设置按键功能，按下返回时回到主菜单
+	public boolean onKeyDown(int KeyCode,KeyEvent event)
+	{
+		switch(KeyCode)
+		{
+		case KeyEvent.KEYCODE_BACK:
+			Intent intent =new Intent();
+			intent.setClass(Check.this, Main.class);
+			
+			startActivity(intent);
+			Check.this.finish();
+			break;
+		}
+		 return super.onKeyDown(KeyCode, event);
+	}
+	
+	//更新的GPS地址
     private void updateWithNewLocation(Location location) 
     {
         String latLongString;
@@ -175,6 +200,7 @@ public class Check extends MapActivity
             myLocationText.setText("你当前的坐标如下:\n"+latLongString+"\n");
         }
 	
+    //检查是否离某site足够近，如果足够近则进行打卡，提示前往下一个site
 	public boolean Check(Location location)
 	{
 		
@@ -199,6 +225,7 @@ public class Check extends MapActivity
 		//else return false;
 	
 	}
+	
 	
     private final LocationListener locationListener=new LocationListener()
     {
@@ -260,12 +287,13 @@ public class Check extends MapActivity
 		return true;
 	}
     
+    //Toast提示
 	public void DisplayToast(String str)
 	{
 		Toast.makeText(this,str,Toast.LENGTH_SHORT).show();
 	}
     
-	
+	//用于记录经过路径的Overlay
 	class PastLocationOverlay extends Overlay
 	{
 		Location mLocation;
@@ -294,6 +322,7 @@ public class Check extends MapActivity
 			return true;
 		}
 		}
+	
 	
 	class MyLocationOverlay extends Overlay
 	{
