@@ -104,7 +104,8 @@ public class Activity01 extends MapActivity
         criteria.setCostAllowed(false);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
         //取得效果最好的criteria
-        String provider=locationManager.getBestProvider(criteria, true);
+        //String provider=locationManager.getBestProvider(criteria, true);
+        String provider=locationManager.GPS_PROVIDER;
         //得到坐标相关的信息
         location=locationManager.getLastKnownLocation(provider);
         //更新坐标
