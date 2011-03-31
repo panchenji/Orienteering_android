@@ -111,7 +111,16 @@ public class Check extends MapActivity
         String provider=null;
         //取得效果最好的criteria
        // while(provider==null){
-        provider=locationManager.getBestProvider(criteria, true);
+        provider=LocationManager.GPS_PROVIDER;
+        //provider=locationManager.getBestProvider(criteria, true);
+        if(provider==null)
+        {
+        	DisplayToast("GPS服务不可用！");
+        	Intent intent =new Intent();
+			intent.setClass(Check.this, Main.class);
+			startActivity(intent);
+			Check.this.finish();
+        }
         //}
         //得到坐标相关的信息
         location=locationManager.getLastKnownLocation(provider);
@@ -341,6 +350,8 @@ public class Check extends MapActivity
 			Paint paint = new Paint();
 			Point myScreenCoords = new Point();
 			// 将经纬度转换成实际屏幕坐标
+			if(mLocation!=null)
+			{
 			GeoPoint tmpGeoPoint = new GeoPoint((int)(mLocation.getLatitude()*1E6),(int)(mLocation.getLongitude()*1E6));
 			mapView.getProjection().toPixels(tmpGeoPoint, myScreenCoords);
 			paint.setStrokeWidth(1);
@@ -368,6 +379,7 @@ public class Check extends MapActivity
 				}
 			}
 			canvas.drawText(".", myScreenCoords.x, myScreenCoords.y, paint);
+			}
 			return true;
 		}
 	}

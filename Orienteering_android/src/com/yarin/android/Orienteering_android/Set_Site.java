@@ -19,6 +19,7 @@ import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -69,6 +70,11 @@ public class Set_Site extends MapActivity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+        Log.v("gps","VERBOSE");
+        Log.d("gps","DEBUG");
+        Log.i("gps","INFO");
+        Log.w("gps","WARN");
+        Log.e("gps","ERROR");
 
 		setContentView(R.layout.main2);
 		
@@ -107,16 +113,24 @@ public class Set_Site extends MapActivity
         criteria.setCostAllowed(false);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
         //取得效果最好的criteria
-        while(provider==null){
+       // while(provider==null){
         provider=locationManager.getBestProvider(criteria, true);
+        if(provider==null)
+        {
+        	DisplayToast("GPS服务不可用！");
+        	Intent intent =new Intent();
+			intent.setClass(Set_Site.this, Main.class);
+			startActivity(intent);
+			Set_Site.this.finish();
         }
+        //}
         //得到坐标相关的信息
         location=locationManager.getLastKnownLocation(provider);
         //更新坐标
        // updateWithNewLocation(location);
         //注册一个周期性的更新，3000ms更新一次
 		//locationListener用来监听定位信息的改变
-        //locationManager.requestLocationUpdates(provider, 3000, 0,locationListener);
+        locationManager.requestLocationUpdates(provider, 3000, 0,locationListener);
 		//添加Overlay，用于显示标注信息
         MyLocationOverlay myLocationOverlay = new MyLocationOverlay();
         List<Overlay> list = mMapView.getOverlays();
@@ -125,9 +139,32 @@ public class Set_Site extends MapActivity
 	}
 	
 	//用于实现GPS位置的更新
+	 private final LocationListener locationListener=new LocationListener()
+	    {
+	    	//当坐标改变时触发此函数
+	        public void onLocationChanged(Location location)
+	        {
+	        	UpdateMyLocation(location);
+	        }
+	        //Provider被disable时触发此函数，比如GPS被关闭 
+	        public void onProviderDisabled(String provider)
+	        {
+	        	UpdateMyLocation(null);
+	        }
+	        //Provider被enable时触发此函数，比如GPS被打开
+	        public void onProviderEnabled(String provider){}
+	        //Provider的转态在可用、暂时不可用和无服务三个状态直接切换时触发此函数
+	        public void onStatusChanged(String provider,int status,Bundle extras){}
+	    };
     private void UpdateMyLocation() 
     {
     	 location=locationManager.getLastKnownLocation(provider);
+    	 mGeoPoint = new GeoPoint((int) (location.getLatitude() * 1000000), (int) (location.getLongitude() * 1000000));
+    	 mMapController.animateTo(mGeoPoint); //转向新的位置
+    }
+    private void UpdateMyLocation(Location location) 
+    {
+    	 //location=locationManager.getLastKnownLocation(provider);
     	 mGeoPoint = new GeoPoint((int) (location.getLatitude() * 1000000), (int) (location.getLongitude() * 1000000));
     	 mMapController.animateTo(mGeoPoint); //转向新的位置
     }
