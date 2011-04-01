@@ -50,6 +50,9 @@ public class Check extends MapActivity
     private static final int ZOOM_OUT=Menu.FIRST+1;
     //**********
     private static final int CHECK=Menu.FIRST+2;
+    private static final int Traffic_model=Menu.FIRST+3;
+    private static final int Satellite_model=Menu.FIRST+4;
+    private static final int StreetView_model=Menu.FIRST+5;
     //private static final int =Menu.FIRST+3;
     //************
 
@@ -62,7 +65,7 @@ public class Check extends MapActivity
         Log.e("gps","ERROR");
         setContentView(R.layout.main3);
         
-        /***********
+       
          SharedPreferences sites=getSharedPreferences("site",0);
          //读取文件中的设置的sites
          num_sites=sites.getInt("num_sites", 0);
@@ -70,17 +73,17 @@ public class Check extends MapActivity
          for(int k=0;k<num_sites;k++)
          {
         	 site_lat[k]=Double.parseDouble(sites.getString("sitelat" +Integer.toString(k), ""));
-        	 site_lat[k]=Double.parseDouble(sites.getString("sitelong" +Integer.toString(k), ""));
+        	 site_long[k]=Double.parseDouble(sites.getString("sitelong" +Integer.toString(k), ""));
          }
          //将sites存入数组中
          //////////////
-          */
-         num_sites=2;
-        site_lat[0]=30.731881;
-        site_lat[1]=30.643898;
+         
+        // num_sites=2;
+       //site_lat[0]=30.731881;
+        //site_lat[1]=30.643898;
         //site_lat[2]=27.000000;
-        site_long[0]=104.02937;
-        site_long[1]=103.993665;
+       // site_long[0]=104.02937;
+        //site_long[1]=103.993665;
         //site_long[2]=-83.000000;
       	 //取得LocationManager实例
         LocationManager locationManager;
@@ -264,6 +267,9 @@ public class Check extends MapActivity
 		menu.add(0, ZOOM_IN, Menu.NONE, "放大");
 		menu.add(0, ZOOM_OUT, Menu.NONE, "缩小");
 		menu.add(0,CHECK,Menu.NONE,"确认");
+		menu.add(1, Traffic_model, Menu.NONE,"交通模式" );
+		menu.add(1, Satellite_model, Menu.NONE,"卫星模式" );
+		menu.add(1, StreetView_model, Menu.NONE,"街景模式" );
 		return true;
 	}
     
@@ -275,11 +281,11 @@ public class Check extends MapActivity
 			case (ZOOM_IN):
 				//放大
 				mapController.zoomIn();
-				return true;
+				break;
 			case (ZOOM_OUT):
 				//缩小
 				mapController.zoomOut();
-				return true;
+				break;
 			case (CHECK):
 				//打卡
 				//Location location=getLocation();
@@ -291,7 +297,27 @@ public class Check extends MapActivity
 					
 					}
 				else DisplayToast("Check fail! Get closer.");
-				return true;
+			break;
+			
+			case (Traffic_model):
+				
+				//设置为交通模式
+				myMapView.setTraffic(true);
+				myMapView.setSatellite(false);
+				myMapView.setStreetView(false);
+				break;
+			case (Satellite_model):
+				//设置为卫星模式
+				myMapView.setSatellite(true);
+				myMapView.setTraffic(false);
+				myMapView.setStreetView(false);
+				break;
+			case (StreetView_model):
+				//设置为街景模式
+				myMapView.setStreetView(true);
+				myMapView.setSatellite(false);
+				myMapView.setTraffic(false);
+				break;
 		}
 		return true;
 	}
@@ -374,7 +400,7 @@ public class Check extends MapActivity
 				//		Integer.toString(i), "")),(int)(sites.getString("sitelat" +
 				//				Integer.toString(i), "")));
 				mapView.getProjection().toPixels(Site_GeoPoint, Site_ScreenCoords);
-				canvas.drawBitmap(site_bmp,Site_ScreenCoords.x-site_bmp.getWidth(), Site_ScreenCoords.y-site_bmp.getHeight() , paint);
+				canvas.drawBitmap(site_bmp,Site_ScreenCoords.x-site_bmp.getWidth()*2/5, Site_ScreenCoords.y-site_bmp.getHeight()*5/6 , paint);
 				canvas.drawText("("+Double.toString(site_lat[i])+","+Double.toString(site_long[i])+")", Site_ScreenCoords.x,Site_ScreenCoords.y, paint);
 				}
 			}

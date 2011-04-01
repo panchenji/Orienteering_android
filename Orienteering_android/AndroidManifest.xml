@@ -21,7 +21,9 @@
         <activity android:name=".Check"
         		  android:label="@string/Check" >
          </activity>
-     
+             <activity android:name=".Instruction"
+        		  android:label="@string/Instruction" >
+         </activity>
 
     
     </application>

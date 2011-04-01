@@ -58,6 +58,9 @@ public class Set_Site extends MapActivity
     private static final int Pin_Start=Menu.FIRST; 
     private static final int Pin_End=Menu.FIRST+1;
     private static final int My_Location=Menu.FIRST+2;
+    private static final int Traffic_model=Menu.FIRST+3;
+    private static final int Satellite_model=Menu.FIRST+4;
+    private static final int StreetView_model=Menu.FIRST+5;
     
     Location location;
     LocationManager locationManager;
@@ -100,7 +103,7 @@ public class Set_Site extends MapActivity
 		//定位到成都
 		mMapController.animateTo(mGeoPoint); 
 		//设置倍数(1-21)
-		mMapController.setZoom(12); 
+		mMapController.setZoom(17); 
 		sites=getSharedPreferences("sites",0);
 		
 		
@@ -221,8 +224,9 @@ public class Set_Site extends MapActivity
             })
             .create();//创建
             dlg.show();//显示
+            break;
 		}
-
+		
            return super.onKeyDown(KeyCode, event);
 		
 		}
@@ -260,10 +264,12 @@ public class Set_Site extends MapActivity
     public boolean onCreateOptionsMenu(Menu menu)
 	{
 		super.onCreateOptionsMenu(menu);
-		menu.add(0, Pin_Start, Menu.NONE, "标记");
-		menu.add(0,Pin_End,Menu.NONE,"关闭标记");
+		menu.add(0, Pin_Start, Menu.NONE, "标记模式");
+		menu.add(0,Pin_End,Menu.NONE,"关闭标记模式");
 		menu.add(0, My_Location, Menu.NONE, "我的位置");
-		
+		menu.add(1, Traffic_model, Menu.NONE,"交通模式" );
+		menu.add(1, Satellite_model, Menu.NONE,"卫星模式" );
+		menu.add(1, StreetView_model, Menu.NONE,"街景模式" );
 		
 		return true;
 	}
@@ -276,16 +282,39 @@ public class Set_Site extends MapActivity
 			case (Pin_Start):
 				//开启标记
 				pin=true;
-				return true;
+				break;
 
 			case (Pin_End):
 				//取消标记
 			    pin=false;
 			
-				return true;
+				break;
 			case (My_Location):
 				//我的位置
 				UpdateMyLocation();
+				break;
+			
+			case (Traffic_model):
+				
+				//设置为交通模式
+				mMapView.setTraffic(true);
+				mMapView.setSatellite(false);
+				mMapView.setStreetView(false);
+				break;
+			
+			case (Satellite_model):
+				//设置为卫星模式
+				mMapView.setSatellite(true);
+				mMapView.setTraffic(false);
+				mMapView.setStreetView(false);
+				break;
+			
+			case (StreetView_model):
+				//设置为街景模式
+				mMapView.setStreetView(true);
+				mMapView.setSatellite(false);
+				mMapView.setTraffic(false);
+				break;
 		}
 		return true;
 	}
@@ -341,7 +370,7 @@ public class Set_Site extends MapActivity
 			mMapView.getProjection().toPixels(GeoPinCoords,PinCoords);
 			
 			//显示Pin
-			canvas.drawBitmap(bmparrow, PinCoords.x-bmparrow.getWidth(), PinCoords.y-bmparrow.getHeight(), paint);
+			canvas.drawBitmap(bmparrow, PinCoords.x-bmparrow.getWidth()*2/5, PinCoords.y-bmparrow.getHeight()*5/6, paint);
 			//canvas.drawText("天府广场", myScreenCoords.x, myScreenCoords.y, paint);
 		//	return true;
 		}
@@ -395,7 +424,7 @@ public class Set_Site extends MapActivity
 				long_abs=Touch_longitude-Double.parseDouble(sites.getString("sitelong" +
 						Integer.toString(i), ""));
 				
-				if((Math.abs(lat_abs)<=1E-2)&&(Math.abs(long_abs)<=1E-2)) 
+				if((Math.abs(lat_abs)<=1E-3)&&(Math.abs(long_abs)<=1E-3)) 
 				{
 					Touch_latitude=Double.parseDouble(sites.getString("sitelat" +
 							Integer.toString(i), ""));
@@ -448,6 +477,7 @@ public class Set_Site extends MapActivity
 				
 				DisplayToast("删除。。。。。。");
 			}
+			editor.putInt("num_sites", num_site);
 			editor.commit();
 			}
 			return true;
